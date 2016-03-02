@@ -1,3 +1,10 @@
+/*
+  Zumo 32u4 (Pololu) encoder, angle, distance position recording tests.
+  This is a re-implimentation of the existing Zumo libraries without
+  referencing their source and using the Arduino IDE.
+  To compile and burn to the Zumo 32u4, follow their instructions on connecting the Arduino IDE:
+  Link: https://www.pololu.com/docs/0J63/5
+*/
 #define WHEEL_DIAMETER 3.9 //outer-outer (cm)
 #define COUNTS_PER_REVOLUTION (2.0*909.07) //fastest gear ratio
 #define RAD2DEG (180.0/PI)
