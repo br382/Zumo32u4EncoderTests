@@ -4,6 +4,9 @@
   referencing their source and using the Arduino IDE.
   To compile and burn to the Zumo 32u4, follow their instructions on connecting the Arduino IDE:
   Link: https://www.pololu.com/docs/0J63/5
+  Reference for all-pins interrupt:
+  http://www.geertlangereis.nl/Electronics/Pin_Change_Interrupts/PinChange_en.html
+  http://thewanderingengineer.com/2014/08/11/arduino-pin-change-interrupts/
 */
 #define WHEEL_DIAMETER 3.9 //outer-outer (cm)
 #define COUNTS_PER_REVOLUTION (2.0*909.07) //fastest gear ratio
@@ -74,6 +77,45 @@ void motorLeftIsr()
   l_last_b = l_now_b;
 }
 
+void setupPinChangeISR() {
+    // configuring input pins wanted:
+    pinMode(7, INPUT_PULLUP);
+    pinMode(8, INPUT_PULLUP);
+    pinMode(23, INPUT_PULLUP);
+    pinMode(HWB, INPUT_PULLUP);
+    
+    cli(); //disable interrupts for configuring their settings
+    //set ports that allow interrupting...
+    //PCICR |= 0b00000001; //turn on PORTB
+    //PCICR |= 0b00000010; //turn on PORTC
+    //PCICR |= 0b00000100; //turn on PORTD
+    PCICR |= 0b00000111; //turn on all PORT
+    
+    //set pins that allow interrupting...
+    //PCMSK0 |= 0b00000001; // turn on pin PB0, which is on PCINT0, physical pin14
+    //PCMSK1 |= 0b00010000; // turn on pin PC4, which is PCINT12, physical pin27
+    //PCMSK2 |= 0b10000001; // turn on pins PD0 and PD7, PCINT16 and PCINT23
+    PCMSK0 |= 0b11111111;
+    PCMSK1 |= 0b11111111;
+    PCMSK2 |= 0b11111111;
+    sei(); //enable interrupts after config is done.
+}
+
+void pinChageISR() {//run on any pin changes
+    motorRightIsr();
+    motorLeftIsr();
+}
+
+// The Separate ISR bus callbacks defined:
+ISR(PCINT0_vect) { //PORTB, PCINT0 - PCINT7
+    pinChageISR();
+}
+ISR(PCINT1_vect) { //PORTC, PCINT8 - PCINT14
+    pinChageISR();
+}
+ISR(PCINT2_vect) { //PORTD, PCINT16 - PCINT23
+    pinChageISR();
+}
 
 double getDisplacement(){ return((inc_L + inc_R) * ENCODER_SCALE_FACTOR / 2.0); }
 
@@ -102,18 +144,24 @@ void setup(void) {
   Serial.begin(9600);
   pinMode(13, OUTPUT);
   //INPUT_PULLUP
+  /*
   pinMode(7, INPUT_PULLUP);
   pinMode(8, INPUT_PULLUP);
   pinMode(23, INPUT_PULLUP);
   pinMode(HWB, INPUT_PULLUP);
+  //Unfortunately only the pin7 Hardware interrupt exists on leonardo (pin8 can't work this way)
   attachInterrupt(digitalPinToInterrupt(7), motorRightIsr, CHANGE);
   attachInterrupt(digitalPinToInterrupt(8), motorLeftIsr, CHANGE);
+  */
 
+  //Motor Drive settings:
   // LEFT                 RIGHT
   pinMode(10, OUTPUT);      pinMode(9,  OUTPUT);
   pinMode(16, OUTPUT);      pinMode(15, OUTPUT);
-  digitalWrite(10, FALSE); digitalWrite(9,  FALSE);
-  digitalWrite(16, LOW); digitalWrite(15, LOW); //LOw -> FORWARD
+  digitalWrite(10, FALSE); digitalWrite(9,  FALSE); //FALSE = 0%, TRUE = 100% power (PWM)
+  digitalWrite(16, LOW); digitalWrite(15, LOW); //LOW -> FORWARD, HIGH -> REVERSE
+  
+  setupPinChangeISR(); //enable global ISR() bus handler(s)
 }
 
 
