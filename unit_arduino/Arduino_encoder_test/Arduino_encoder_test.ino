@@ -95,15 +95,15 @@ void setupPinChangeISR() {
     //PCMSK0 |= 0b00000001; // turn on pin PB0, which is on PCINT0, physical pin14
     //PCMSK1 |= 0b00010000; // turn on pin PC4, which is PCINT12, physical pin27
     //PCMSK2 |= 0b10000001; // turn on pins PD0 and PD7, PCINT16 and PCINT23
-    PCMSK0 |= 0b11111111;
-    PCMSK1 |= 0b11111111;
-    PCMSK2 |= 0b11111111;
+    //PCMSK0 |= 0b11111111;
+    //PCMSK1 |= 0b11111111;
+    //PCMSK2 |= 0b11111111;
     sei(); //enable interrupts after config is done.
 }
 
 void pinChageISR() {//run on any pin changes
     motorRightIsr();
-    motorLeftIsr();
+    //motorLeftIsr();
 }
 
 // The Separate ISR bus callbacks defined:
